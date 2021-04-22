@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:khetipoint_assignment/services/constants.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:khetipoint_assignment/screens/explore_screen.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
 class OpeningScreen extends StatefulWidget {
@@ -74,7 +74,9 @@ class _OpeningScreenState extends State<OpeningScreen> {
                       height: 40,
                     ),
               FlatButton(
-                  onPressed: () async {},
+                  onPressed: () {
+                    Navigator.pushNamed(context, ExploreScreen.id);
+                  },
                   child: Container(
                     padding: EdgeInsets.all(10),
                     width: double.infinity,

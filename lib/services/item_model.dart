@@ -8,9 +8,9 @@ class Item {
   String description;
   String language;
   String languageColor;
-  String stars;
-  String forks;
-  String currentPeriodStars;
+  int stars;
+  int forks;
+  int currentPeriodStars;
 
   Item({
     this.author,

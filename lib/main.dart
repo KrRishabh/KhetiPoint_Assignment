@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:khetipoint_assignment/screens/opening_screen.dart';
+import 'package:khetipoint_assignment/screens/explore_screen.dart';
 
 void main() {
   return runApp(KhetiPoint());
@@ -14,7 +15,7 @@ class KhetiPoint extends StatelessWidget {
       initialRoute: OpeningScreen.id,
       routes: {
         OpeningScreen.id: (context) => OpeningScreen(),
-        //ExploreAllScreen.id: (context) => ExploreAllScreen(),
+        ExploreScreen.id: (context) => ExploreScreen(),
       },
     );
   }
