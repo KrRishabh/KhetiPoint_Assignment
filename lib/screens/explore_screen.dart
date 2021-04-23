@@ -16,6 +16,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   bool showSpinner = false;
   ItemFetcher _itemFetcher = ItemFetcher();
   List<Item> allItems;
+  List<bool> isCollapsed = [];
+
+  void fillBoolean(int count) {
+    for (int i = 0; i < count; i++) {
+      isCollapsed.add(true);
+    }
+  }
 
   Future<Null> refreshList() async {
     await fetchItemList();
@@ -26,11 +33,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() {
       showSpinner = true;
     });
-    await _itemFetcher.fetchAllItems();
-    allItems = _itemFetcher.items;
-    setState(() {
-      showSpinner = false;
-    });
+    int responseCode = await _itemFetcher.fetchAllItems();
+    if (responseCode == 200) {
+      allItems = _itemFetcher.items;
+      fillBoolean(allItems.length);
+      setState(() {
+        showSpinner = false;
+      });
+    } else {
+      //Something went wrong.
+    }
   }
 
   @override
@@ -38,6 +50,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() {
       showSpinner = true;
     });
+
     //The meeting data gets populated here in the data variable
     fetchItemList();
     super.initState();
@@ -45,13 +58,18 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double cwidth = MediaQuery.of(context).size.width;
     return SafeArea(
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Trending'),
+          iconTheme: IconThemeData(color: Colors.black54),
+          title: Text(
+            'Trending',
+            style: TextStyle(color: Colors.black87),
+          ),
+          backgroundColor: Color.fromARGB(255, 250, 250, 250),
         ),
         body: Container(
-          height: 300,
           child: showSpinner
               ? Container(
                   child: Center(
@@ -68,7 +86,175 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   child: ListView.builder(
                     itemCount: allItems == null ? 0 : allItems.length,
                     itemBuilder: (context, index) {
-                      return Container(child: Text(allItems[index].name));
+                      return isCollapsed[index]
+                          ? GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  isCollapsed[index] = !isCollapsed[index];
+                                });
+                              },
+                              child: Column(
+                                children: [
+                                  Container(
+                                      width: cwidth,
+                                      height: 80,
+                                      padding: EdgeInsets.symmetric(
+                                          horizontal: 15, vertical: 15),
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            backgroundImage: NetworkImage(
+                                                allItems[index].avatar),
+                                          ),
+                                          SizedBox(
+                                            width: 15,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              Text(
+                                                allItems[index].author,
+                                                style: TextStyle(
+                                                    fontSize: 13,
+                                                    color: Colors.black54),
+                                              ),
+                                              Text(
+                                                allItems[index].name,
+                                                style: TextStyle(
+                                                    fontSize: 18,
+                                                    color: Colors.black87,
+                                                    fontWeight:
+                                                        FontWeight.w600),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      )),
+                                  Divider(
+                                    height: 5,
+                                    thickness: 1,
+                                  ),
+                                ],
+                              ))
+                          : GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  isCollapsed[index] = !isCollapsed[index];
+                                });
+                              },
+                              child: Container(
+                                width: cwidth,
+                                child: Column(
+                                  children: [
+                                    Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 15, vertical: 15),
+                                        child: Row(
+                                          children: [
+                                            CircleAvatar(
+                                              backgroundImage: NetworkImage(
+                                                  allItems[index].avatar),
+                                            ),
+                                            SizedBox(
+                                              width: 15,
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.spaceEvenly,
+                                              children: [
+                                                Text(
+                                                  allItems[index].author,
+                                                  style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54),
+                                                ),
+                                                Text(
+                                                  allItems[index].name,
+                                                  style: TextStyle(
+                                                      fontSize: 18,
+                                                      color: Colors.black87,
+                                                      fontWeight:
+                                                          FontWeight.w600),
+                                                ),
+                                                SizedBox(
+                                                  height: 8,
+                                                ),
+                                                Container(
+                                                  width: 300,
+                                                  child: Text(
+                                                    allItems[index].description,
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: Colors.black54,
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines: 4,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  height: 8,
+                                                ),
+                                                //Row for the color circles
+                                                Row(
+                                                  children: [
+                                                    FaIcon(
+                                                      FontAwesomeIcons.circle,
+                                                      size: 20,
+                                                      color: Colors.red,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Text(allItems[index]
+                                                        .language),
+                                                    SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                    FaIcon(
+                                                      FontAwesomeIcons.star,
+                                                      color: Colors.yellow,
+                                                      size: 20,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Text(allItems[index]
+                                                        .stars
+                                                        .toString()),
+                                                    SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                    FaIcon(
+                                                      FontAwesomeIcons.github,
+                                                      color: Colors.black54,
+                                                      size: 20,
+                                                    ),
+                                                    SizedBox(
+                                                      width: 5,
+                                                    ),
+                                                    Text(allItems[index]
+                                                        .forks
+                                                        .toString())
+                                                  ],
+                                                )
+                                              ],
+                                            ),
+                                          ],
+                                        )),
+                                    Divider(
+                                      height: 5,
+                                      thickness: 1,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
                     },
                   ),
                 ),

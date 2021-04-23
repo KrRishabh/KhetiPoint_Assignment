@@ -8,7 +8,7 @@ class ItemFetcher {
   String apiUrl =
       'https://private-anon-764531e222-githubtrendingapi.apiary-mock.com/repositories';
 
-  Future<void> fetchAllItems() async {
+  Future<int> fetchAllItems() async {
     final response = await http.get(apiUrl);
 
     if (response.statusCode == 200) {
@@ -18,6 +18,7 @@ class ItemFetcher {
     } else {
       print('Came into Else on Item provider');
     }
+    return response.statusCode;
   }
 
   List<Item> get items {
