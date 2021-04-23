@@ -17,6 +17,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
   ItemFetcher _itemFetcher = ItemFetcher();
   List<Item> allItems;
   List<bool> isCollapsed = [];
+  bool networkError = true;
+  int errorCode;
 
   void fillBoolean(int count) {
     for (int i = 0; i < count; i++) {
@@ -33,15 +35,30 @@ class _ExploreScreenState extends State<ExploreScreen> {
     setState(() {
       showSpinner = true;
     });
-    int responseCode = await _itemFetcher.fetchAllItems();
-    if (responseCode == 200) {
-      allItems = _itemFetcher.items;
-      fillBoolean(allItems.length);
+    try {
+      int responseCode = await _itemFetcher.fetchAllItems();
+      if (responseCode == 200) {
+        allItems = _itemFetcher.items;
+        fillBoolean(allItems.length);
+        setState(() {
+          networkError = false;
+          showSpinner = false;
+        });
+      } else {
+        //Something went wrong.
+        setState(() {
+          showSpinner = false;
+          errorCode = responseCode;
+          networkError = true;
+        });
+      }
+    } catch (e) {
       setState(() {
         showSpinner = false;
+        errorCode = 400;
+        networkError = true;
+        print(e.toString());
       });
-    } else {
-      //Something went wrong.
     }
   }
 
@@ -81,183 +98,227 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 )
               //This is the List builder for meetings
 
-              : RefreshIndicator(
-                  onRefresh: refreshList,
-                  child: ListView.builder(
-                    itemCount: allItems == null ? 0 : allItems.length,
-                    itemBuilder: (context, index) {
-                      return isCollapsed[index]
-                          ? GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  isCollapsed[index] = !isCollapsed[index];
-                                });
-                              },
-                              child: Column(
-                                children: [
-                                  Container(
-                                      width: cwidth,
-                                      height: 80,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 15, vertical: 15),
-                                      child: Row(
-                                        children: [
-                                          CircleAvatar(
-                                            backgroundImage: NetworkImage(
-                                                allItems[index].avatar),
-                                          ),
-                                          SizedBox(
-                                            width: 15,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceEvenly,
+              : networkError
+                  ? Container(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Image(
+                              image: AssetImage(
+                                  'illustration/nointernet_connection.png'),
+                              width: 350,
+                            ),
+                            Text(
+                              'Something Went Wrong',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 30),
+                            ),
+                            Text(
+                              'Error Code: $errorCode',
+                              style: TextStyle(
+                                  color: Colors.black54, fontSize: 20),
+                            ),
+                            FlatButton(
+                              onPressed: refreshList,
+                              child: Container(
+                                  height: 50,
+                                  width: 300,
+                                  color: Colors.green,
+                                  child: Center(
+                                      child: Text(
+                                    'Retry',
+                                    style: TextStyle(
+                                        fontSize: 30, color: Colors.white),
+                                  ))),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: refreshList,
+                      child: ListView.builder(
+                        itemCount: allItems == null ? 0 : allItems.length,
+                        itemBuilder: (context, index) {
+                          return isCollapsed[index]
+                              ? GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      isCollapsed[index] = !isCollapsed[index];
+                                    });
+                                  },
+                                  child: Column(
+                                    children: [
+                                      Container(
+                                          width: cwidth,
+                                          height: 80,
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 15, vertical: 15),
+                                          child: Row(
                                             children: [
-                                              Text(
-                                                allItems[index].author,
-                                                style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.black54),
+                                              CircleAvatar(
+                                                backgroundImage: NetworkImage(
+                                                    allItems[index].avatar),
                                               ),
-                                              Text(
-                                                allItems[index].name,
-                                                style: TextStyle(
-                                                    fontSize: 18,
-                                                    color: Colors.black87,
-                                                    fontWeight:
-                                                        FontWeight.w600),
+                                              SizedBox(
+                                                width: 15,
+                                              ),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceEvenly,
+                                                children: [
+                                                  Text(
+                                                    allItems[index].author,
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.black54),
+                                                  ),
+                                                  Text(
+                                                    allItems[index].name,
+                                                    style: TextStyle(
+                                                        fontSize: 18,
+                                                        color: Colors.black87,
+                                                        fontWeight:
+                                                            FontWeight.w600),
+                                                  ),
+                                                ],
                                               ),
                                             ],
-                                          ),
-                                        ],
-                                      )),
-                                  Divider(
-                                    height: 5,
-                                    thickness: 1,
-                                  ),
-                                ],
-                              ))
-                          : GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  isCollapsed[index] = !isCollapsed[index];
-                                });
-                              },
-                              child: Container(
-                                width: cwidth,
-                                child: Column(
-                                  children: [
-                                    Container(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 15, vertical: 15),
-                                        child: Row(
-                                          children: [
-                                            CircleAvatar(
-                                              backgroundImage: NetworkImage(
-                                                  allItems[index].avatar),
-                                            ),
-                                            SizedBox(
-                                              width: 15,
-                                            ),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.spaceEvenly,
+                                          )),
+                                      Divider(
+                                        height: 5,
+                                        thickness: 1,
+                                      ),
+                                    ],
+                                  ))
+                              : GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      isCollapsed[index] = !isCollapsed[index];
+                                    });
+                                  },
+                                  child: Container(
+                                    width: cwidth,
+                                    child: Column(
+                                      children: [
+                                        Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 15, vertical: 15),
+                                            child: Row(
                                               children: [
-                                                Text(
-                                                  allItems[index].author,
-                                                  style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.black54),
-                                                ),
-                                                Text(
-                                                  allItems[index].name,
-                                                  style: TextStyle(
-                                                      fontSize: 18,
-                                                      color: Colors.black87,
-                                                      fontWeight:
-                                                          FontWeight.w600),
+                                                CircleAvatar(
+                                                  backgroundImage: NetworkImage(
+                                                      allItems[index].avatar),
                                                 ),
                                                 SizedBox(
-                                                  height: 8,
+                                                  width: 15,
                                                 ),
-                                                Container(
-                                                  width: 300,
-                                                  child: Text(
-                                                    allItems[index].description,
-                                                    style: TextStyle(
-                                                      fontSize: 13,
-                                                      color: Colors.black54,
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    maxLines: 4,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  height: 8,
-                                                ),
-                                                //Row for the color circles
-                                                Row(
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceEvenly,
                                                   children: [
-                                                    FaIcon(
-                                                      FontAwesomeIcons.circle,
-                                                      size: 20,
-                                                      color: Colors.red,
+                                                    Text(
+                                                      allItems[index].author,
+                                                      style: TextStyle(
+                                                          fontSize: 13,
+                                                          color:
+                                                              Colors.black54),
+                                                    ),
+                                                    Text(
+                                                      allItems[index].name,
+                                                      style: TextStyle(
+                                                          fontSize: 18,
+                                                          color: Colors.black87,
+                                                          fontWeight:
+                                                              FontWeight.w600),
                                                     ),
                                                     SizedBox(
-                                                      width: 5,
+                                                      height: 8,
                                                     ),
-                                                    Text(allItems[index]
-                                                        .language),
-                                                    SizedBox(
-                                                      width: 20,
-                                                    ),
-                                                    FaIcon(
-                                                      FontAwesomeIcons.star,
-                                                      color: Colors.yellow,
-                                                      size: 20,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 5,
-                                                    ),
-                                                    Text(allItems[index]
-                                                        .stars
-                                                        .toString()),
-                                                    SizedBox(
-                                                      width: 20,
-                                                    ),
-                                                    FaIcon(
-                                                      FontAwesomeIcons.github,
-                                                      color: Colors.black54,
-                                                      size: 20,
+                                                    Container(
+                                                      width: 300,
+                                                      child: Text(
+                                                        allItems[index]
+                                                            .description,
+                                                        style: TextStyle(
+                                                          fontSize: 13,
+                                                          color: Colors.black54,
+                                                        ),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        maxLines: 4,
+                                                      ),
                                                     ),
                                                     SizedBox(
-                                                      width: 5,
+                                                      height: 8,
                                                     ),
-                                                    Text(allItems[index]
-                                                        .forks
-                                                        .toString())
+                                                    //Row for the color circles
+                                                    Row(
+                                                      children: [
+                                                        FaIcon(
+                                                          FontAwesomeIcons
+                                                              .circle,
+                                                          size: 20,
+                                                          color: Colors.red,
+                                                        ),
+                                                        SizedBox(
+                                                          width: 5,
+                                                        ),
+                                                        Text(allItems[index]
+                                                            .language),
+                                                        SizedBox(
+                                                          width: 20,
+                                                        ),
+                                                        FaIcon(
+                                                          FontAwesomeIcons.star,
+                                                          color: Colors.yellow,
+                                                          size: 20,
+                                                        ),
+                                                        SizedBox(
+                                                          width: 5,
+                                                        ),
+                                                        Text(allItems[index]
+                                                            .stars
+                                                            .toString()),
+                                                        SizedBox(
+                                                          width: 20,
+                                                        ),
+                                                        FaIcon(
+                                                          FontAwesomeIcons
+                                                              .github,
+                                                          color: Colors.black54,
+                                                          size: 20,
+                                                        ),
+                                                        SizedBox(
+                                                          width: 5,
+                                                        ),
+                                                        Text(allItems[index]
+                                                            .forks
+                                                            .toString())
+                                                      ],
+                                                    )
                                                   ],
-                                                )
+                                                ),
                                               ],
-                                            ),
-                                          ],
-                                        )),
-                                    Divider(
-                                      height: 5,
-                                      thickness: 1,
+                                            )),
+                                        Divider(
+                                          height: 5,
+                                          thickness: 1,
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
-                              ),
-                            );
-                    },
-                  ),
-                ),
+                                  ),
+                                );
+                        },
+                      ),
+                    ),
         ),
       ),
     );
